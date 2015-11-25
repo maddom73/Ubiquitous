@@ -38,6 +38,7 @@ import android.support.wearable.watchface.WatchFaceStyle;
 import android.text.format.DateFormat;
 import android.util.Log;
 import android.view.SurfaceHolder;
+import android.view.WindowInsets;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -110,11 +111,14 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
         String weatherLow;
         Bitmap weatherIcon;
 
+        float timeXOffset;
+        float dateXOffset;
         float lineHeight;
         float timeYOffset;
         float dateYOffset;
         float dividerYOffset;
         float weatherYOffset;
+        float timeXOffsetAmbient;
 
         private Calendar calendar;
 
@@ -199,6 +203,33 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
             return paint;
         }
 
+        @Override
+        public void onApplyWindowInsets(WindowInsets insets) {
+            super.onApplyWindowInsets(insets);
+
+            // Load resources that have alternate values for round watches.
+            Resources resources = SunshineWatchFace.this.getResources();
+            boolean isRound = insets.isRound();
+            timeXOffsetAmbient = resources.getDimension(isRound
+                    ? R.dimen.time_x_offset_round : R.dimen.time_x_offset);
+            dateXOffset = resources.getDimension(isRound
+                    ? R.dimen.date_x_offset_round : R.dimen.date_x_offset);
+            timeXOffsetAmbient = resources.getDimension(isRound
+                    ? R.dimen.time_x_offset_round_ambient : R.dimen.time_x_offset_ambient);
+            float timeTextSize = resources.getDimension(isRound
+                    ? R.dimen.digital_temp_round : R.dimen.digital_temp);
+            float dateTextSize = resources.getDimension(isRound
+                    ? R.dimen.digital_date_round : R.dimen.digital_date);
+            float tempTextSize = resources.getDimension(isRound
+                    ? R.dimen.digital_temp_round : R.dimen.digital_temp);
+
+            textPaint.setTextSize(timeTextSize);
+            textDatePaint.setTextSize(dateTextSize);
+            textDateAmbientPaint.setTextSize(dateTextSize);
+            textTempHighPaint.setTextSize(tempTextSize);
+            textTempLowAmbientPaint.setTextSize(tempTextSize);
+            textTempLowPaint.setTextSize(tempTextSize);
+        }
 
 
         @Override

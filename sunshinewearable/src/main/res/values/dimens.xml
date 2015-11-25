@@ -4,7 +4,7 @@
     <dimen name="digital_time_round">32dp</dimen>
     <dimen name="digital_date">15dp</dimen>
     <dimen name="digital_date_round">20dp</dimen>
-    <dimen name="digital_temp_">25dp</dimen>
+    <dimen name="digital_temp">25dp</dimen>
     <dimen name="digital_temp_round">30dp</dimen>
 
     <dimen name="time_x_offset">80dp</dimen>
