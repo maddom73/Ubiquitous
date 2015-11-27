@@ -22,6 +22,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -75,7 +76,7 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
     private static final Typeface BOLD_TYPEFACE =
             Typeface.create(Typeface.SANS_SERIF, Typeface.BOLD);
 
-    private static final long INTERACTIVE_UPDATE_RATE_MS = TimeUnit.SECONDS.toMillis(1);
+    private static final long UPDATE_M = TimeUnit.SECONDS.toMillis(1);
 
     /**
      * Handler message id for updating the time periodically in interactive mode.
@@ -180,6 +181,7 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
             textTempLowAmbientPaint = setTextPaint(Color.WHITE);
 
             calendar = Calendar.getInstance();
+
         }
 
         @Override
@@ -210,7 +212,7 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
             // Load resources that have alternate values for round watches.
             Resources resources = SunshineWatchFace.this.getResources();
             boolean isRound = insets.isRound();
-            timeXOffsetAmbient = resources.getDimension(isRound
+            timeXOffset = resources.getDimension(isRound
                     ? R.dimen.time_x_offset_round : R.dimen.time_x_offset);
             dateXOffset = resources.getDimension(isRound
                     ? R.dimen.date_x_offset_round : R.dimen.date_x_offset);
@@ -301,8 +303,8 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
                         : String.format("%d:%02d:%02d %s", hour, minute, second, time12Text);
             }
 
-            float xOffsetTime = textPaint.measureText(timeText) / 2;
-            canvas.drawText(timeText, bounds.centerX() - xOffsetTime, timeYOffset, textPaint);
+            float timeXOffset = textPaint.measureText(timeText) / 2;
+            canvas.drawText(timeText, bounds.centerX() - timeXOffset, timeYOffset, textPaint);
 
             // Decide which paint to user for the next bits dependent on ambient mode.
             Paint datePaint = mAmbient ? textDateAmbientPaint : textDatePaint;
@@ -489,10 +491,10 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
         private void handleUpdateTimeMessage() {
             invalidate();
             if (shouldTimerBeRunning()) {
-                long timeMs = System.currentTimeMillis();
-                long delayMs = INTERACTIVE_UPDATE_RATE_MS
-                        - (timeMs % INTERACTIVE_UPDATE_RATE_MS);
-                mUpdateTimeHandler.sendEmptyMessageDelayed(MSG_UPDATE_TIME, delayMs);
+                long msTime = System.currentTimeMillis();
+                long msDelay = UPDATE_M
+                        - (msTime % UPDATE_M);
+                mUpdateTimeHandler.sendEmptyMessageDelayed(MSG_UPDATE_TIME, msDelay);
             }
         }
 
@@ -509,9 +511,9 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
                         @Override
                         public void onResult(DataApi.DataItemResult dataItemResult) {
                             if (!dataItemResult.getStatus().isSuccess()) {
-                                Log.d(TAG, "Failed asking phone for weather data");
+                                Log.d(TAG, "Richiesta dati al telefono fallita");
                             } else {
-                                Log.d(TAG, "Successfully asked for weather data");
+                                Log.d(TAG, "Richiesta dati al telefono correttamente inviata");
                             }
                         }
                     });
@@ -532,27 +534,30 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
                     if (path.equals(WEATHER_INFO)) {
                         if (dataMap.containsKey(HIGH)) {
                             weatherHigh = dataMap.getString(HIGH);
-                            Log.d(TAG, "High = " + weatherHigh);
+                            Log.d(TAG, "Massima = " + weatherHigh);
                         } else {
-                            Log.d(TAG, "What? No high?");
+                            Log.d(TAG, "Niente dati x la massima");
                         }
 
                         if (dataMap.containsKey(LOW)) {
                             weatherLow = dataMap.getString(LOW);
-                            Log.d(TAG, "Low = " + weatherLow);
+                            Log.d(TAG, "Minima = " + weatherLow);
                         } else {
-                            Log.d(TAG, "What? No low?");
+                            Log.d(TAG, "Niente dati x la minima");
                         }
 
                         if (dataMap.containsKey(WEATHER_ID)) {
                             int weatherId = dataMap.getInt(WEATHER_ID);
-                            Drawable b = getResources().getDrawable(Utility.getIconResourceForWeatherCondition(weatherId));
-                            Bitmap icon = ((BitmapDrawable) b).getBitmap();
-                            float scaledWidth = (textTempHighPaint.getTextSize() / icon.getHeight()) * icon.getWidth();
-                            weatherIcon = Bitmap.createScaledBitmap(icon, (int) scaledWidth, (int) textTempHighPaint.getTextSize(), true);
+                            if (weatherId != 0) {
+
+                                Drawable b = getDrawable(Utility.getIconResourceForWeatherCondition(weatherId));
+                                Bitmap icon = ((BitmapDrawable) b).getBitmap();
+                                float scaledWidth = (textTempHighPaint.getTextSize() / icon.getHeight()) * icon.getWidth();
+                                weatherIcon = Bitmap.createScaledBitmap(icon, (int) scaledWidth, (int) textTempHighPaint.getTextSize(), true);
+                            }
 
                         } else {
-                            Log.d(TAG, "What? no weatherId?");
+                            Log.d(TAG, "Niente id tempo");
                         }
 
                         invalidate();
